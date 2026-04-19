@@ -32,8 +32,6 @@ Thumbs.db
 **/*.key
 **/*.pem
 .aws/
-aws-setup.ps1
-aws-setup.sh
 
 # ─── IDEs ───
 .vscode/
