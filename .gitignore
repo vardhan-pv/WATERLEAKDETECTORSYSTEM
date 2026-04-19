@@ -1,0 +1,42 @@
+# ─── General ───
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.local
+.env.*.local
+
+# ─── Node / React (Frontend & Backend) ───
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/build/
+.eslintcache
+
+# ─── Python (IoT Simulator) ───
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/.pytest_cache/
+**/venv/
+**/.venv/
+**/env/
+**/bin/
+**/lib/
+**/include/
+
+# ─── Project Specific & AWS ───
+**/iot-simulator/certs/
+**/*.zip
+**/*.crt
+**/*.key
+**/*.pem
+.aws/
+aws-setup.ps1
+aws-setup.sh
+
+# ─── IDEs ───
+.vscode/
+.idea/
+*.swp
+*.swo
