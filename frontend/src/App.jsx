@@ -64,8 +64,13 @@ const KAVERI_NODES = [
 ];
 
 // ─── Config ──────────────────────────────────────────────────────────────────
-const WS_URL  = import.meta.env.VITE_WS_URL  || (window.location.protocol === "https:" ? `wss://${window.location.host}/ws` : `ws://${window.location.host}/ws`);
-const API_URL = import.meta.env.VITE_API_URL || "";
+const WS_PREFIX = window.location.hostname === "localhost" ? "" : "/_/backend";
+const WS_URL    = import.meta.env.VITE_WS_URL || 
+                 (window.location.protocol === "https:" 
+                  ? `wss://${window.location.host}${WS_PREFIX}/ws` 
+                  : `ws://${window.location.host}${WS_PREFIX}/ws`);
+
+const API_URL   = import.meta.env.VITE_API_URL || (window.location.hostname === "localhost" ? "" : "/_/backend");
 
 // ─── Bengaluru Water Grid — 32 Real-World Zones ─────────────────────────────
 const PIPELINE_NODES = [
