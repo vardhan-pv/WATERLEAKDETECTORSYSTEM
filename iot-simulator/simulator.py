@@ -25,7 +25,7 @@ logging.basicConfig(
 log = logging.getLogger("WaterLeakSimulator")
 
 # ─── AWS IoT Config ─────────────────────────────────────────────────────────
-AWS_IOT_ENDPOINT = "YOUR_AWS_IOT_ENDPOINT.iot.us-east-1.amazonaws.com"
+AWS_IOT_ENDPOINT = "a16525rk34u76s-ats.iot.us-east-1.amazonaws.com"
 AWS_IOT_PORT     = 8883
 MQTT_TOPIC_BASE  = "water/pipeline"
 
