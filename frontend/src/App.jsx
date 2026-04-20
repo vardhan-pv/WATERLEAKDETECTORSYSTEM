@@ -64,8 +64,8 @@ const KAVERI_NODES = [
 ];
 
 // ─── Config ──────────────────────────────────────────────────────────────────
-const WS_URL  = import.meta.env.VITE_WS_URL  || "ws://localhost:4000/ws";
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const WS_URL  = import.meta.env.VITE_WS_URL  || (window.location.protocol === "https:" ? `wss://${window.location.host}/ws` : `ws://${window.location.host}/ws`);
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 // ─── Bengaluru Water Grid — 32 Real-World Zones ─────────────────────────────
 const PIPELINE_NODES = [
