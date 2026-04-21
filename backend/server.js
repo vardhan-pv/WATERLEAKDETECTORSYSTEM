@@ -30,6 +30,7 @@ import { createServer as createNetServer } from "net";
 
 // ─── MQTT Broker Setup (Local fallback) ──────────────────────────────────────
 const MQTT_BROKER    = process.env.MQTT_BROKER   || "mqtt://localhost:1883";
+const isAWS = MQTT_BROKER.includes("amazonaws.com");
 
 if (MQTT_BROKER.includes("localhost")) {
   const broker = await Aedes.createBroker();
@@ -108,11 +109,26 @@ wss.on("connection", (ws) => {
 // ─── MQTT Subscriber ─────────────────────────────────────────────────────────
 const activeIncidents = new Map(); // device_id -> { event_id, index in recentLeaks }
 
-const mqttClient = mqtt.connect(MQTT_BROKER, {
+const mqttOptions = {
   clientId:      `water-backend-${Date.now()}`,
   reconnectPeriod: 3000,
   connectTimeout:  10000,
-});
+};
+
+// If AWS IoT Core, add certificates
+if (isAWS) {
+  const certDir = path.join(__dirname, "certs");
+  try {
+    mqttOptions.key = fs.readFileSync(path.join(certDir, "private.pem.key"));
+    mqttOptions.cert = fs.readFileSync(path.join(certDir, "device-certificate.pem.crt"));
+    mqttOptions.ca = fs.readFileSync(path.join(certDir, "AmazonRootCA1.pem"));
+    mqttOptions.protocol = 'mqtts';
+  } catch (e) {
+    console.warn("⚠️ AWS Certificates not found in backend/certs/ - MQTT might fail to connect.");
+  }
+}
+
+const mqttClient = mqtt.connect(MQTT_BROKER, mqttOptions);
 
 mqttClient.on("connect", () => {
   console.log(`✅ MQTT connected to ${MQTT_BROKER}`);
@@ -179,6 +195,19 @@ mqttClient.on("message", (topic, buffer) => {
 });
 
 // ─── REST API Routes ──────────────────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.send(`
+    <div style="font-family: sans-serif; padding: 40px; text-align: center; background: #0f172a; color: white; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <h1 style="color: #38bdf8; font-size: 3rem; margin-bottom: 1rem;">🌊 Water Leak Detection API</h1>
+      <p style="font-size: 1.2rem; color: #94a3b8;">The backend server is running smoothly.</p>
+      <div style="margin-top: 2rem; padding: 1rem; background: #1e293b; border-radius: 8px; border: 1px solid #334155;">
+        <p>API Health: <a href="/api/health" style="color: #38bdf8; text-decoration: none;">/api/health</a></p>
+        <p>WebSocket: <code style="color: #f472b6;">/ws</code></p>
+      </div>
+      <p style="margin-top: 2rem; color: #64748b; font-size: 0.9rem;">Note: This is the backend API. Usually, you want to access the frontend dashboard.</p>
+    </div>
+  `);
+});
 
 /** GET /api/health */
 app.get("/api/health", (req, res) => {

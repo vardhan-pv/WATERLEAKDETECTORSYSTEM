@@ -49,6 +49,10 @@ try {
     $SNS_ARN = (aws sns create-topic --name WaterLeakAlerts --region $AWS_REGION --query TopicArn --output text)
     Write-Host "[+] SNS Topic ARN: $SNS_ARN" -ForegroundColor Green
 
+    # Subscribe email
+    Write-Host "[*] Subscribing vardhanreddypv4@gmail.com to alerts..." -ForegroundColor Cyan
+    aws sns subscribe --topic-arn $SNS_ARN --protocol email --notification-endpoint "vardhanreddypv4@gmail.com" --region $AWS_REGION
+
     # 3. IAM Role for Lambda
     Write-Host "`n[*] Creating IAM Role..." -ForegroundColor Cyan
     $trustPolicy = @{
