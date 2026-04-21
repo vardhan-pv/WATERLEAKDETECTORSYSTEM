@@ -3,20 +3,13 @@
   "buildCommand": "npm --prefix frontend install && npm --prefix frontend run build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "http://98.86.220.72:4000/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-{
-  "experimentalServices": {
-    "frontend": {
-      "entrypoint": "frontend",
-      "routePrefix": "/",
-      "framework": "vite"
+    {
+      "source": "/api/:path*",
+      "destination": "http://98.86.220.72:4000/:path*"
     },
-    "backend": {
-      "entrypoint": "backend",
-      "routePrefix": "/api" 
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  }
+  ]
 }
