@@ -409,50 +409,60 @@ function useWaterSystem(sendLeakNotification) {
   const ws = useRef(null);
 
   useEffect(() => {
+    let timeoutId;
     const connect = () => {
-      ws.current = new WebSocket(WS_URL);
-      ws.current.onopen = () => setConnected(true);
-      ws.current.onclose = () => { setConnected(false); setTimeout(connect, 3000); };
-      ws.current.onmessage = (e) => {
-        const { type, data } = JSON.parse(e.data);
-        if (type === "INIT") {
-          const m = {};
-          (data.readings || []).forEach(r => { m[r.device_id] = r; });
-          setSensors(m);
-          
-          const historicalLeaks = data.leaks || [];
-          setLeaks(historicalLeaks);
+      try {
+        ws.current = new WebSocket(WS_URL);
+        ws.current.onopen = () => setConnected(true);
+        ws.current.onclose = () => { setConnected(false); timeoutId = setTimeout(connect, 3000); };
+        ws.current.onmessage = (e) => {
+          const { type, data } = JSON.parse(e.data);
+          if (type === "INIT") {
+            const m = {};
+            (data.readings || []).forEach(r => { m[r.device_id] = r; });
+            setSensors(m);
+            
+            const historicalLeaks = data.leaks || [];
+            setLeaks(historicalLeaks);
 
-          // Populate alerts center with historical leaks
-          historicalLeaks.forEach(l => {
-            const node = PIPELINE_NODES.find(n => n.id === l.device_id);
-            if (node) {
-              sendLeakNotification(node.id, l.leak_severity, node.name, node.office, l.latitude, l.longitude, l.anomaly_type, l.event_id, l.assignedRegion, l.assignedTo, l.resolved ? "RESOLVED" : null);
-            }
-          });
-        } else if (type === "SENSOR_UPDATE") {
-          setSensors(p => ({ ...p, [data.device_id]: data }));
-          setHistory(p => {
-            const h = p[data.device_id] || { pressure: [], flow: [] };
-            return {
-              ...p,
-              [data.device_id]: {
-                pressure: [...h.pressure, data.pressure || 0].slice(-20),
-                flow: [...h.flow, data.flow_rate || 0].slice(-20)
+            // Populate alerts center with historical leaks
+            historicalLeaks.forEach(l => {
+              const node = PIPELINE_NODES.find(n => n.id === l.device_id);
+              if (node) {
+                sendLeakNotification(node.id, l.leak_severity, node.name, node.office, l.latitude, l.longitude, l.anomaly_type, l.event_id, l.assignedRegion, l.assignedTo, l.resolved ? "RESOLVED" : null);
               }
-            };
-          });
-        } else if (type === "LEAK_ALERT") {
-          // Handle deduplicated leak alert from backend
-          const node = PIPELINE_NODES.find(n => n.id === data.device_id);
-          if (node) {
-            sendLeakNotification(node.id, data.leak_severity, node.name, node.office, data.latitude, data.longitude, data.anomaly_type, data.event_id);
+            });
+          } else if (type === "SENSOR_UPDATE") {
+            setSensors(p => ({ ...p, [data.device_id]: data }));
+            setHistory(p => {
+              const h = p[data.device_id] || { pressure: [], flow: [] };
+              return {
+                ...p,
+                [data.device_id]: {
+                  pressure: [...h.pressure, data.pressure || 0].slice(-20),
+                  flow: [...h.flow, data.flow_rate || 0].slice(-20)
+                }
+              };
+            });
+          } else if (type === "LEAK_ALERT") {
+            // Handle deduplicated leak alert from backend
+            const node = PIPELINE_NODES.find(n => n.id === data.device_id);
+            if (node) {
+              sendLeakNotification(node.id, data.leak_severity, node.name, node.office, data.latitude, data.longitude, data.anomaly_type, data.event_id);
+            }
           }
-        }
-      };
+        };
+      } catch (err) {
+        console.error("WebSocket connection error:", err);
+        setConnected(false);
+        timeoutId = setTimeout(connect, 5000);
+      }
     };
     connect();
-    return () => ws.current?.close();
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      ws.current?.close();
+    };
   }, [sendLeakNotification]);
 
   return { connected, sensors: Object.values(sensors), history, leaks };

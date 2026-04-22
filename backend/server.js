@@ -194,20 +194,26 @@ mqttClient.on("message", (topic, buffer) => {
   }
 });
 
-// ─── REST API Routes ──────────────────────────────────────────────────────────
-app.get("/", (req, res) => {
-  res.send(`
-    <div style="font-family: sans-serif; padding: 40px; text-align: center; background: #0f172a; color: white; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-      <h1 style="color: #38bdf8; font-size: 3rem; margin-bottom: 1rem;">🌊 Water Leak Detection API</h1>
-      <p style="font-size: 1.2rem; color: #94a3b8;">The backend server is running smoothly.</p>
-      <div style="margin-top: 2rem; padding: 1rem; background: #1e293b; border-radius: 8px; border: 1px solid #334155;">
-        <p>API Health: <a href="/api/health" style="color: #38bdf8; text-decoration: none;">/api/health</a></p>
-        <p>WebSocket: <code style="color: #f472b6;">/ws</code></p>
+// ─── Frontend & API Routes ────────────────────────────────────────────────────
+const frontendPath = path.join(__dirname, "../frontend/dist");
+if (fs.existsSync(frontendPath)) {
+  console.log(`📂 Serving Frontend UI from: ${frontendPath}`);
+  app.use(express.static(frontendPath));
+} else {
+  app.get("/", (req, res) => {
+    res.send(`
+      <div style="font-family: sans-serif; padding: 40px; text-align: center; background: #0f172a; color: white; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <h1 style="color: #38bdf8; font-size: 3rem; margin-bottom: 1rem;">🌊 Water Leak Detection API</h1>
+        <p style="font-size: 1.2rem; color: #94a3b8;">The backend server is running smoothly.</p>
+        <div style="margin-top: 2rem; padding: 1rem; background: #1e293b; border-radius: 8px; border: 1px solid #334155;">
+          <p>API Health: <a href="/api/health" style="color: #38bdf8; text-decoration: none;">/api/health</a></p>
+          <p>WebSocket: <code style="color: #f472b6;">/ws</code></p>
+        </div>
+        <p style="margin-top: 2rem; color: #64748b; font-size: 0.9rem;">Note: This is the backend API. Usually, you want to access the frontend dashboard.</p>
       </div>
-      <p style="margin-top: 2rem; color: #64748b; font-size: 0.9rem;">Note: This is the backend API. Usually, you want to access the frontend dashboard.</p>
-    </div>
-  `);
-});
+    `);
+  });
+}
 
 /** GET /api/health */
 app.get("/api/health", (req, res) => {
@@ -377,6 +383,17 @@ app.patch("/api/leaks/:eventId/resolve", async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 });
+
+// ─── SPA Fallback ─────────────────────────────────────────────────────────────
+if (fs.existsSync(frontendPath)) {
+  app.get("*", (req, res) => {
+    if (!req.path.startsWith('/api') && !req.path.startsWith('/_/backend')) {
+      res.sendFile(path.join(frontendPath, "index.html"));
+    } else {
+      res.status(404).json({ success: false, message: "Route not found" });
+    }
+  });
+}
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
 server.listen(PORT, () => {

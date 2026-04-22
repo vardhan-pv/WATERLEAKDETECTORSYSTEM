@@ -23,8 +23,15 @@ echo "[*] Preparing backend directory..."
 echo "[*] Installing PM2..."
 sudo npm install -g pm2
 
-# 4. Install backend dependencies
-echo "[*] Installing npm dependencies..."
+# 4. Build frontend
+echo "[*] Building frontend..."
+cd frontend
+npm install
+npm run build
+cd ..
+
+# 5. Install backend dependencies
+echo "[*] Installing backend dependencies..."
 cd backend
 npm install
 
