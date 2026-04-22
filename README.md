@@ -1,321 +1,130 @@
-# 🌊 Smart Water Leak Detection & Pipeline Monitoring System
+# 🌊 AquaGuard Bengaluru: Smart Water Leak Detection System
 
-> **IoT Simulation + AWS + Real-Time Dashboard — Final Year Project**
+[![React](https://img.shields.io/badge/Frontend-React%2019-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Backend-Node.js-339933?style=for-the-badge&logo=node.js)](https://nodejs.org/)
+[![Python](https://img.shields.io/badge/Simulator-Python%203-3776AB?style=for-the-badge&logo=python)](https://www.python.org/)
+[![AWS](https://img.shields.io/badge/Cloud-AWS-232F3E?style=for-the-badge&logo=amazon-aws)](https://aws.amazon.com/)
 
-A complete, production-grade IoT system that simulates water pipeline sensors, detects leaks using anomaly detection logic, streams data via MQTT to AWS IoT Core, stores it in DynamoDB, triggers SMS/Email alerts via SNS, and displays everything in a real-time React dashboard with a live map.
-
----
-
-## 🏗️ Architecture Overview
-
-```
-Simulated IoT Script
-        │
-        │ MQTT (TLS 8883)
-        ▼
-AWS IoT Core ──────────────────────── IoT Rule (SQL)
-        │                                    │
-        │                                    ▼
-        │                            AWS Lambda
-        │                          (leak_processor.py)
-        │                            /         \
-        │                       DynamoDB       AWS SNS
-        │                   (store readings)  (SMS/Email)
-        │
-Express Backend (Node.js)
-  ├── Subscribes to MQTT broker
-  ├── REST APIs (GET /api/sensors, /api/leaks)
-  ├── WebSocket server (/ws)
-  └── In-memory live state
-        │
-        │ WebSocket + REST
-        ▼
-React Dashboard
-  ├── Live sensor cards
-  ├── Leak alert log
-  ├── Real-time map (SVG / Mapbox)
-  └── Toast notifications
-```
+**AquaGuard Bengaluru** is a full-stack IoT solution designed to monitor the water distribution grid of Bengaluru. It uses high-fidelity sensor simulation to detect leaks in real-time, visualize telemetry data on interactive maps, and manage incident resolution workflows for municipal authorities.
 
 ---
 
-## 📁 Project Structure
+## 🚀 Key Features
 
-```
-water-leak-system/
-├── iot-simulator/
-│   ├── simulator.py          # Main IoT device simulator
-│   ├── requirements.txt      # Python deps (paho-mqtt)
-│   └── certs/                # AWS IoT certificates (gitignored)
-│       ├── device-certificate.pem.crt
-│       ├── private.pem.key
-│       └── AmazonRootCA1.pem
-│
-├── backend/
-│   ├── server.js             # Express + WebSocket + MQTT subscriber
-│   ├── package.json
-│   ├── .env.example
-│   └── lambda/
-│       └── leak_processor.py # AWS Lambda function
-│
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx           # Main dashboard
-│   │   ├── main.jsx
-│   │   └── hooks/
-│   │       └── useWebSocket.js
-│   ├── index.html
-│   ├── package.json
-│   └── .env.example
-│
-├── aws-setup.sh              # Full AWS provisioning script
-├── start-local.sh            # Local demo (no AWS needed)
-└── README.md
+-   **Real-time IoT Telemetry**: Monitor Pressure (bar), Flow Rate (L/min), Vibration (Hz), and Battery levels across 32 pipeline nodes.
+-   **Smart Leak Detection**: Automated detection of anomalies such as sudden pressure drops and flow surges.
+-   **Interactive Dashboard**: GIS-integrated map showing node health, leak severity (Low, Medium, High, Critical), and live charts.
+-   **Incident Management**: Dedicated alerts page for staff assignment and leak resolution tracking.
+-   **Authority-only Registration**: Secure signup process requiring a specific authority code for municipal staff.
+-   **Cloud Native Architecture**: Fully integrated with AWS IoT Core for ingestion and DynamoDB for historical storage.
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    subgraph "IoT Edge"
+        S[Python Simulator] -- MQTT --> AWS_IOT[AWS IoT Core]
+        S -- MQTT --> L_MQTT[Local MQTT Broker]
+    end
+
+    subgraph "Cloud / Backend"
+        AWS_IOT -- Rule --> DDB[(AWS DynamoDB)]
+        AWS_IOT -- Rule --> SNS[AWS SNS / SMS]
+        L_MQTT <--> BE[Node.js Express Server]
+        BE <--> DDB
+    end
+
+    subgraph "User Interface"
+        BE -- WebSockets --> FE[React Dashboard]
+        FE -- REST API --> BE
+    end
 ```
 
 ---
 
-## 🚀 Quick Start (Local Demo — No AWS Required)
+## 🛠️ Tech Stack
 
-### Option A: Auto Start
-```bash
-chmod +x start-local.sh
-./start-local.sh
-```
+-   **Frontend**: React 19, Vite, Leaflet.js, React Google Maps, CSS3 (Glassmorphism).
+-   **Backend**: Node.js, Express, WebSocket (ws), MQTT.js, Aedes (Local Broker).
+-   **IoT Simulator**: Python 3, Paho-MQTT, SSL/TLS.
+-   **Cloud Infrastructure**: AWS IoT Core, DynamoDB, SNS, Lambda.
 
-### Option B: Manual Steps
+---
 
-#### Step 1: Local MQTT Broker
-```bash
-# macOS
-brew install mosquitto && mosquitto -p 1883
+## 🔧 Installation & Setup
 
-# Ubuntu/Linux
-sudo apt install mosquitto && mosquitto -p 1883
-```
+### 1. Prerequisites
+-   Node.js (v18+)
+-   Python (3.9+)
+-   AWS CLI configured (optional, for cloud mode)
 
-#### Step 2: Backend
+### 2. Backend Setup
 ```bash
 cd backend
-cp .env.example .env
 npm install
+# Create a .env file with your AWS credentials/region
 node server.js
-# Runs on http://localhost:4000
 ```
+*The backend automatically starts a local MQTT broker if no remote broker is specified.*
 
-#### Step 3: Frontend
+### 3. Frontend Setup
 ```bash
 cd frontend
-cp .env.example .env
 npm install
 npm run dev
-# Opens at http://localhost:5173
 ```
+*Access the dashboard at `http://localhost:5173`.*
 
-#### Step 4: IoT Simulator
+### 4. IoT Simulator Setup
 ```bash
 cd iot-simulator
-pip install -r requirements.txt
-python simulator.py --local --interval 3
+# Recommendation: use a venv
+pip install paho-mqtt
+python simulator.py --interval 3.0
+```
+*To run in local mode: `python simulator.py --local`*
+
+---
+
+## 🔑 Authority Credentials
+
+To register a new staff account on the dashboard, use the following **Authority Code**:
+`Waterleakauthority100281`
+
+---
+
+## 📂 Project Structure
+
+```text
+├── backend/            # Express server, WebSocket logic, DynamoDB integration
+├── frontend/           # React application, Map components, Dashboard UI
+├── iot-simulator/      # Python script simulating 32 pipeline nodes in Bengaluru
+├── aws-setup.sh        # Infrastructure automation scripts
+└── README.md           # This file
 ```
 
 ---
 
-## ☁️ AWS Production Setup
+## 📜 API Documentation
 
-### Prerequisites
-```bash
-aws configure  # Set your AWS credentials
-```
-
-### Run Setup Script
-```bash
-chmod +x aws-setup.sh
-./aws-setup.sh
-```
-
-This provisions:
-- ✅ DynamoDB tables (WaterSensorReadings, LeakEvents)
-- ✅ SNS topic with email/SMS subscriptions
-- ✅ Lambda function (leak_processor.py)
-- ✅ IoT Core Thing + certificates + policy
-- ✅ IoT Rule → Lambda trigger
-
-### Update Simulator Config
-After running `aws-setup.sh`, update `iot-simulator/simulator.py`:
-```python
-AWS_IOT_ENDPOINT = "your-endpoint.iot.us-east-1.amazonaws.com"  # from setup output
-```
-
-### Run Simulator Against AWS
-```bash
-cd iot-simulator
-python simulator.py  # Uses AWS IoT Core (no --local flag)
-```
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/api/sensors` | `GET` | Get latest readings for all nodes |
+| `/api/leaks` | `GET` | Get list of recent leak incidents |
+| `/api/leaks/history` | `GET` | Fetch historical leak data from DynamoDB |
+| `/api/auth/register`| `POST`| Register new authority user |
+| `/api/health` | `GET` | System health and MQTT status |
 
 ---
 
-## 📡 MQTT Topic Structure
+## 🚢 Deployment
 
-```
-water/pipeline/{zone}/{device_id}
-
-Examples:
-  water/pipeline/a/node-001
-  water/pipeline/b/node-003
-  water/pipeline/c/node-005
-
-IoT Rule subscribes to: water/pipeline/#
-```
+-   **Frontend**: Optimized for [Vercel](https://vercel.com) or Netlify.
+-   **Backend**: Can be deployed to AWS EC2 or Elastic Beanstalk.
+-   **Infrastructure**: Use the provided `aws-setup.sh` to provision the required IoT Core and DynamoDB resources.
 
 ---
 
-## 📋 Sample JSON Payload
-
-```json
-{
-  "device_id":      "NODE-001",
-  "device_name":    "Zone A — Main Junction",
-  "zone":           "A",
-  "timestamp":      "2025-08-15T10:30:45.123456+00:00",
-  "latitude":       12.971634,
-  "longitude":      77.594612,
-  "flow_rate":      82.4,
-  "pressure":       1.87,
-  "temperature":    23.5,
-  "vibration":      6.2,
-  "humidity":       67.3,
-  "leak_status":    true,
-  "leak_severity":  "HIGH",
-  "anomaly_type":   "COMBINED",
-  "battery_level":  91.2,
-  "signal_strength": -62,
-  "sequence_num":   47
-}
-```
-
----
-
-## 🧠 Leak Detection Logic
-
-```python
-pressure_drop = pressure < 2.5   # bar threshold
-flow_surge    = flow > 65         # L/min threshold
-
-if pressure_drop AND flow_surge   → CRITICAL (COMBINED)
-elif pressure_drop AND p < 1.7    → HIGH (PRESSURE_DROP)
-elif pressure_drop                → MEDIUM (PRESSURE_DROP)
-elif flow > 80                    → HIGH (FLOW_SURGE)
-elif flow_surge                   → LOW (FLOW_SURGE)
-else                              → NONE (normal)
-```
-
----
-
-## 🌐 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET |`/api/health`| System health check |
-| GET |`/api/sensors`| All live sensor readings |
-| GET | `/api/sensors/:id` | Single device reading |
-| GET | `/api/leaks` | Recent leak events (memory) |
-| GET | `/api/leaks/history` | Leak history from DynamoDB |
-| GET | `/api/pipeline/status` | Pipeline summary stats |
-| PATCH | `/api/leaks/:id/resolve` | Mark leak as resolved |
-| WS | `/ws` | WebSocket for real-time updates |
-
----
-
-## 🗂️ WebSocket Message Types
-
-```json
-{ "type": "INIT",          "data": { "readings": [...], "leaks": [...] } }
-{ "type": "SENSOR_UPDATE", "data": { ...sensorPayload } }
-{ "type": "LEAK_ALERT",    "data": { ...leakEvent } }
-{ "type": "LEAK_RESOLVED", "data": { "event_id": "..." } }
-```
-
----
-
-## 🚨 Alert System
-
-SNS sends alerts to email/SMS when a leak is detected:
-
-```
-🆘 [CRITICAL] Water Leak Detected — Zone A | NODE-001
-
-📍 LOCATION
-   Device     : Zone A — Main Junction (NODE-001)
-   Zone       : Zone A
-   Coordinates: 12.971634, 77.594612
-   Maps Link  : https://maps.google.com/?q=12.971634,77.594612
-
-📊 SENSOR READINGS
-   Pressure   : 1.05 bar (Normal: 2.5–4.5 bar)
-   Flow Rate  : 91.2 L/min (Normal: 10–50 L/min)
-   Anomaly    : COMBINED
-
-🔧 ACTION: IMMEDIATE dispatch required — critical leak!
-```
-
----
-
-## 🗺️ Adding Real Maps (Optional)
-
-### Google Maps
-```jsx
-// In App.jsx, replace the SVG map with:
-import { GoogleMap, Marker } from "@react-google-maps/api";
-
-<GoogleMap mapContainerStyle={{width:"100%",height:"100%"}} center={{lat:12.97,lng:77.59}} zoom={14}>
-  {sensors.map(s => s.leak_status && (
-    <Marker key={s.device_id}
-      position={{lat:s.latitude, lng:s.longitude}}
-      icon={{ url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" }}
-    />
-  ))}
-</GoogleMap>
-```
-
-### Mapbox
-```bash
-npm install mapbox-gl react-map-gl
-```
-Set `VITE_MAPBOX_TOKEN=your_token` in `frontend/.env`
-
----
-
-## 🔧 Simulated Scenarios
-
-The simulator generates these realistic leak scenarios:
-
-| Scenario | Trigger | Severity | Description |
-|----------|---------|----------|-------------|
-| Pressure Drop | p < 2.5 bar | MEDIUM | Gradual pipe failure |
-| Severe Drop | p < 1.7 bar | HIGH | Major burst |
-| Flow Surge | flow > 65 L/m | LOW-HIGH | Abnormal demand |
-| Combined | Both | CRITICAL | Full pipe rupture |
-
-Each node has a **3% chance per tick** to trigger a scenario, lasting 8–20 ticks, followed by a 25–60 tick cooldown.
-
----
-
-## 🎓 Technologies Used
-
-| Layer | Tech |
-|-------|------|
-| IoT Simulation | Python, paho-mqtt|
-| Message Broker | AWS IoT Core (prod) / Mosquitto (dev)|
-| Serverless | AWS Lambda (Python 3.11)|
-| Database | AWS DynamoDB|
-| Alerts | AWS SNS (Email + SMS)|
-| Backend | Node.js, Express, WS, MQTT.js|
-| Frontend | React 18, Vite|
-| Realtime | WebSocket |
-| Map | SVG (built-in) / Mapbox / Google Maps|
-| Cloud | AWS (IoT Core, Lambda, DynamoDB, SNS, CloudWatch)|
-
----
-
-*Built for academic demonstration — scalable to production with real IoT hardware.*
+*Developed for the Bengaluru Water Supply and Sewerage Board (BWSSB) - Simulation Prototype.*

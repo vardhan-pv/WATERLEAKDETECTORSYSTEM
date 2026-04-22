@@ -386,7 +386,7 @@ app.patch("/api/leaks/:eventId/resolve", async (req, res) => {
 
 // ─── SPA Fallback ─────────────────────────────────────────────────────────────
 if (fs.existsSync(frontendPath)) {
-  app.get("*", (req, res) => {
+  app.get("/:path*", (req, res) => {
     if (!req.path.startsWith('/api') && !req.path.startsWith('/_/backend')) {
       res.sendFile(path.join(frontendPath, "index.html"));
     } else {

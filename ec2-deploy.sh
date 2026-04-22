@@ -11,7 +11,9 @@ echo "🌊 Starting AquaWatch Pro Backend Setup..."
 # 1. Update and install dependencies
 echo "[*] Updating system..."
 sudo apt-get update -y
-sudo apt-get install -y nodejs npm git
+sudo apt-get install -y git unzip
+# nodejs and npm are usually already installed via Nodesource on EC2, 
+# trying to install them again via apt can cause dependency conflicts.
 
 # 2. Clone repository (or part of it)
 # Assuming you have git access or will upload the backend folder
@@ -26,6 +28,8 @@ sudo npm install -g pm2
 # 4. Build frontend
 echo "[*] Building frontend..."
 cd frontend
+# Remove existing node_modules to ensure a clean, OS-compatible install
+rm -rf node_modules package-lock.json
 npm install
 npm run build
 cd ..
@@ -33,6 +37,7 @@ cd ..
 # 5. Install backend dependencies
 echo "[*] Installing backend dependencies..."
 cd backend
+rm -rf node_modules package-lock.json
 npm install
 
 # 5. Setup environment variables
